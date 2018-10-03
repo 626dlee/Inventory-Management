@@ -48,7 +48,7 @@ public:
 		password = p;
 		authLevel = a;
 	}
-	//Getters and Setters for each private variable
+	//Setters for each private variable
 
 	int get_auth() {
 		return authLevel;
@@ -60,8 +60,23 @@ public:
 		return password;
 	}
 };
+//Incomplete
+void add_item(vector<Item> &ItemList) {
+	string name, brand, type, shelf;
+	int id, count, sales_price;
+	cout << "GIVE INFO" << endl;
 
-void add_item() {}
+
+	//This is for when a NEW item is added
+	cin >> name;
+	cin >> brand; 
+	cin >> type;
+	cin >> count;
+	cin >> sales_price;
+	//Logic to find a shelf and an ID number
+
+	//ItemList.push_back(Item(name, brand, type, shelf, id, count, sales_price));
+}
 void remove_item() {}
 void add_account() {}
 void remove_account() {}
@@ -70,25 +85,37 @@ void remove_account() {}
 void login(bool *loggedIn, vector<Account> AccountList, int *auth) {
 	string user, pass;
 	int userLoc;
-	cout << "GIVE USER" << endl;
+	int attempts = 0;
+	cout << "GIVE USER or SHUTDOWN" << endl;
 	cin >> user;
-	for (int i = 0; i < AccountList.size(); i++) {
-		if (user == AccountList[i].get_user()) {
-			cout << "GIVE PASS" << endl;
-			cin >> pass;
-			do {
-				if (pass == AccountList[i].get_pass()) {
-					*loggedIn = true;
-					*auth = AccountList[i].get_auth();
-					i = AccountList.size();
-				}
-				else {
-					cout << "WRONG" << endl;
-					cin >> pass;
-				}
-			} while (!*loggedIn);
-		}
+	//If keyword shutdown is passed, exits program
+	if (user == "shutdown" || user == "SHUTDOWN") {
+		exit(1);
+	}
+	else {
+		//loops through account list to find the matching username
+		for (int i = 0; i < AccountList.size(); i++) {
+			if (user == AccountList[i].get_user()) {
+				cout << "GIVE PASS" << endl;
+				cin >> pass;
+				//Gives 3 attemtps or until logged in successfully to give a correct password
+				do {
+					//If correct, it logs in, and makes it so the remaining accounts are not looked at
+					if (pass == AccountList[i].get_pass()) {
+						*loggedIn = true;
+						*auth = AccountList[i].get_auth();
+						i = AccountList.size();
+					}
+					//If wrong password, requests again, and increments attempt count
+					else {
+						cout << "WRONG" << endl;
+						attempts++;
+						cin >> pass;
+					}
+				} while (attempts < 2 && !*loggedIn);
+			}
 
+		}
 	}
 
 	
