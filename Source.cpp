@@ -93,7 +93,10 @@ void login(bool *loggedIn, vector<Account> AccountList, int *auth) {
 
 	
 }
-void logout() {}
+void logout(bool *loggedIn, int *auth) {
+	*loggedIn = false;
+	*auth = 0;
+}
 
 void shutdown(bool *loggedIn, bool *running) {
 	*loggedIn = false;
