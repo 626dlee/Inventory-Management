@@ -45,6 +45,7 @@ public:
 	}
 };
 
+//May want to add an object to keep track of which items and how many are kept per shelf, eg 2 intel CPUS and 1 AMD CPU
 class Shelf {
 private:
 	string shelf_loc;
