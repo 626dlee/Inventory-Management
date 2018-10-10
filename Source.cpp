@@ -43,6 +43,12 @@ public:
 	void set_count(int c) {
 		count = c;
 	}
+	void change_count(int c) {
+		count = count + c;
+	}
+	void new_shelf(string s) {
+		shelf.push_back(s);
+	}
 };
 
 //May want to add an object to keep track of which items and how many are kept per shelf, eg 2 intel CPUS and 1 AMD CPU
@@ -53,12 +59,16 @@ private:
 	bool full;
 	int count;
 	int max;
+	int remaining;
+	vector<string> storedNames;
+	vector<int> storedCount;
 public:
 	Shelf(string s, string t, int c, int m) {
 		shelf_loc = s;
 		type = t;
 		count = c;
 		max = m;
+		remaining = max - count;
 		set_full();
 	}
 	void set_full() {
@@ -77,8 +87,12 @@ public:
 	int get_count() {
 		return count;
 	}
+	int get_remaining() {
+		return remaining;
+	}
 	void set_count(int c) {
 		count = c;
+		remaining = max - count;
 		set_full();
 	}
 	int get_max() {
@@ -86,6 +100,37 @@ public:
 	}
 	bool is_full() {
 		return full;
+	}
+	void new_store(string n, int c) {
+		storedNames.push_back(n);
+		storedCount.push_back(c);
+		count = count + c;
+		remaining = max - count;
+	}
+	void change_store(string n, int c) {
+		for (int i = 0; i < storedNames.size(); i++) {
+			if (storedNames[i] == n) {
+				storedCount[i] = storedCount[i] + c;
+				count = count + c;
+				remaining = max - count;
+			}
+		}
+	}
+	void remove_store(string n) {
+		for (int i = 0; i < storedNames.size(); i++) {
+			if (storedNames[i] == n) {
+				storedNames.erase(storedNames.begin() + i);
+				count = count - storedCount[i];
+				storedCount.erase(storedCount.begin() + i);
+				remaining = max - count;
+			}
+		}
+	}
+	vector<string> get_storedNames() {
+		return storedNames;
+	}
+	vector<int> get_storedCount() {
+		return storedCount;
 	}
 };
 
@@ -125,16 +170,33 @@ public:
 //Return that type for the item if not full
 void add_item(vector<Item> &ItemList, vector<Shelf> &ShelfList) {
 	string name, brand, type, shelf;
-	int id, count, sales_price;
+	int id, count, sales_price, remain;
 	cout << "GIVE NAME" << endl;
 	cin >> name;
+	vector<string> shelves;
 	for (int i = 0; i < ItemList.size(); i++) {
 		if (ItemList[i].get_name() == name) {
 			cout << "GIVE COUNT" << endl;
 			cin >> count;
 			ItemList[i].set_count(ItemList[i].get_count() + count);
+			shelves = ItemList[i].get_shelf();
+			for (int k = 0; k < shelves.size(); k++) {
+				for (int j = 0; j < ShelfList.size(); j++) {
+					if (ShelfList[j].get_shelfloc() == shelves[k] && !ShelfList[j].is_full() && ShelfList[j].get_remaining() >= count) {
+						ItemList[i].change_count(count);
+						ShelfList[j].change_store(name, count);
+
+						//Sets iterators to too large to force loops to end
+						k = shelves.size();
+						j = ShelfList.size();
+						return;
+					}
+					//LATER: Add case for when shelf cant fit all of count
+				}
+			}
 			//Add later: increment shelf its currently on
 			//cout which shelf to put it on
+			cout << "ITEM WAS FOUND, BUT NO SHELVES EXIST, ITEM WAS MOST LIKELY NOT REMOVED FROM ITEM LIST" << endl;
 			return;
 		}
 	}
@@ -150,24 +212,28 @@ void add_item(vector<Item> &ItemList, vector<Shelf> &ShelfList) {
 
 	//Logic to find a shelf and an ID number
 	for (int k = 0; k < ShelfList.size(); k++) {
-		if ((ShelfList[k].get_type() == type && !ShelfList[k].is_full) && (ShelfList[k].get_count() + count <= ShelfList[k].get_max())) {
+		//Finds shelf that fits all of the item and stores it
+		if ((ShelfList[k].get_type() == type && !ShelfList[k].is_full()) && (ShelfList[k].get_count() + count <= ShelfList[k].get_max())) {
 			shelf = ShelfList[k].get_shelfloc();
-			ShelfList[k].set_count(ShelfList[k].get_count() + count);
 			ItemList.push_back(Item(name, brand, type, shelf, count, sales_price));
-			cout << "Place item(s) in shelf" << shelf << endl;
+			ShelfList[k].new_store(name, count);
+			cout << "Place item(s) in shelf " << shelf << endl;
 			return;
 		}
+		//Cant find one shelf, so it finds a second one that can fit the remaining and stores them
 		else if (ShelfList[k].get_type() == type && !ShelfList[k].is_full()) {
 			for (int j = 0; j < ShelfList.size(); j++) {
-				if ((ShelfList[j].get_shelfloc() != ShelfList[k].get_shelfloc()) && 
+				if ((ShelfList[j].get_type() == type) && (ShelfList[j].get_shelfloc() != ShelfList[k].get_shelfloc()) &&
 					(count - (ShelfList[k].get_max() - ShelfList[k].get_count()) <= (ShelfList[j].get_max() - ShelfList[j].get_count()))) {
 					shelf = ShelfList[k].get_shelfloc();
-					ShelfList[k].set_count(ShelfList[k].get_max());
-					ShelfList[j].set_count(ShelfList[j].get_count() + (count - (ShelfList[k].get_max() - ShelfList[k].get_count())));
 					ItemList.push_back(Item(name, brand, type, shelf, count, sales_price));
-					//Add function call to add second shelf to shelf vector in item, that function still needs to be made
-					cout << "Place " << (ShelfList[k].get_max() - ShelfList[k].get_count()) << " items in shelf " << ShelfList[k].get_shelfloc()
-						<< " and " << (count - (ShelfList[k].get_max() - ShelfList[k].get_count())) << " items in shelf " << ShelfList[j].get_shelfloc() << endl;
+					ItemList[ItemList.size() - 1].new_shelf(ShelfList[j].get_shelfloc());
+					remain = ShelfList[k].get_remaining();
+					ShelfList[k].new_store(name, remain);
+					ShelfList[j].new_store(name, count - remain);
+					cout << "Place " << remain << " items in shelf " << ShelfList[k].get_shelfloc()
+						<< " and " << (count - remain) << " items in shelf " << ShelfList[j].get_shelfloc() << endl;
+					return;
 				}
 			}
 		}
@@ -176,16 +242,28 @@ void add_item(vector<Item> &ItemList, vector<Shelf> &ShelfList) {
 		}
 	}
 }
-void remove_item(vector<Item> &ItemList) {
+void remove_item(vector<Item> &ItemList, vector<Shelf> &ShelfList) {
 	string name;
+	vector<string> shelves;
 	cout << "GIVE ITEM NAME TO REMOVE" << endl;
 	cin >> name;
-	
+
 	//Later may want a helper function to output all items names in a list
 
+	//Iterates through ItemList to find correct item
 	for (int i = 0; i < ItemList.size(); i++) {
 		if (ItemList[i].get_name() == name) {
 			//Modify shelf vector for this item still needed
+			shelves = ItemList[i].get_shelf();
+			//Clears all existing shelves that contained the item of said item
+			for (int j = 0; j < shelves.size(); j++) {
+				for (int k = 0; k < ShelfList.size(); k++){
+					if (shelves[j] == ShelfList[k].get_shelfloc()) {
+						ShelfList[k].remove_store(ItemList[i].get_name());
+					}
+				}
+				
+			}
 			ItemList.erase(ItemList.begin() + i);
 		}
 	}
@@ -271,20 +349,48 @@ int main() {
 	//repeat for all item types and initialize with shelves for each type
 	bool loggedIn = false;
 	bool running = true;
-
+	vector<string> names;
+	vector<int> counts;
+	string command;
 	int auth = 0;
 
 	AccountList.push_back(Account("Admin", "password", 5));
+	ShelfList.push_back(Shelf("A1", "test", 0, 5));
+	ShelfList.push_back(Shelf("A2", "test", 0, 5));
 
 	while (running) {
 		login(&loggedIn, AccountList, &auth);
 		while (loggedIn) {
 			//shutdown(&loggedIn, &running);
+			/*
 			add_account(AccountList);
 			cout << "Account added" << endl;
 			remove_account(AccountList);
 			cout << "Account removed" << endl;
-			logout(&loggedIn, &auth);
+			logout(&loggedIn, &auth);*/
+			cin >> command;
+			if (command == "add") {
+				add_item(ItemList, ShelfList);
+			}
+			else if (command == "remove") {
+				remove_item(ItemList, ShelfList);
+			}
+			else if (command == "logout") {
+				logout(&loggedIn, &auth);
+			}
+			cout << endl << endl;
+			for (int i = 0; i < ItemList.size(); i++) {
+				cout << ItemList[i].get_name() << "\t" << ItemList[i].get_count() << endl;
+			}
+			cout << endl << endl;
+			for (int i = 0; i < ShelfList.size(); i++) {
+				cout << ShelfList[i].get_shelfloc() << "\t" << ShelfList[i].get_count() << "\n";
+				names = ShelfList[i].get_storedNames();
+				counts = ShelfList[i].get_storedCount();
+				for (int k = 0; k < names.size(); k++) {
+					cout << names[k] << "\t" << counts[k] << endl;
+				}
+			}
 		}
 	}
 
