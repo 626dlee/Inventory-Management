@@ -113,12 +113,15 @@ public:
 				storedCount[i] = storedCount[i] + c;
 				count = count + c;
 				remaining = max - count;
+				return;
 			}
 		}
+		new_store(n, c);
 	}
 	void remove_store(string n) {
 		for (int i = 0; i < storedNames.size(); i++) {
 			if (storedNames[i] == n) {
+				cout << "Remove " << storedCount[i] << " " << storedNames[i] << " from shelf " << shelf_loc << endl;
 				storedNames.erase(storedNames.begin() + i);
 				count = count - storedCount[i];
 				storedCount.erase(storedCount.begin() + i);
@@ -165,7 +168,6 @@ public:
 		return password;
 	}
 };
-//Incomplete
 //For finding the shelf, iterate through the shelf vector to find one of the correct type
 //Return that type for the item if not full
 void add_item(vector<Item> &ItemList, vector<Shelf> &ShelfList) {
@@ -178,20 +180,33 @@ void add_item(vector<Item> &ItemList, vector<Shelf> &ShelfList) {
 		if (ItemList[i].get_name() == name) {
 			cout << "GIVE COUNT" << endl;
 			cin >> count;
-			ItemList[i].set_count(ItemList[i].get_count() + count);
 			shelves = ItemList[i].get_shelf();
 			for (int k = 0; k < shelves.size(); k++) {
 				for (int j = 0; j < ShelfList.size(); j++) {
 					if (ShelfList[j].get_shelfloc() == shelves[k] && !ShelfList[j].is_full() && ShelfList[j].get_remaining() >= count) {
 						ItemList[i].change_count(count);
 						ShelfList[j].change_store(name, count);
-
 						//Sets iterators to too large to force loops to end
 						k = shelves.size();
 						j = ShelfList.size();
 						return;
 					}
-					//LATER: Add case for when shelf cant fit all of count
+					else if (ShelfList[j].get_shelfloc() == shelves[k] && !ShelfList[j].is_full()) {
+						for (int l = 0; l < ShelfList.size(); l++) {
+							if ((ShelfList[l].get_type() == ItemList[i].get_type()) && (ShelfList[l].get_shelfloc() != ShelfList[j].get_shelfloc()) &&
+								( count - ShelfList[j].get_remaining() <= ShelfList[l].get_remaining())) {
+								
+
+								ItemList[i].change_count(count);
+								remain = ShelfList[j].get_remaining();
+								ShelfList[j].change_store(name, remain);
+								ShelfList[l].change_store(name, count - remain);
+								cout << "Place " << remain << " items in shelf " << ShelfList[j].get_shelfloc()
+									<< " and " << (count - remain) << " items in shelf " << ShelfList[l].get_shelfloc() << endl;
+								return;
+							}
+						}
+					}
 				}
 			}
 			//Add later: increment shelf its currently on
@@ -237,10 +252,10 @@ void add_item(vector<Item> &ItemList, vector<Shelf> &ShelfList) {
 				}
 			}
 		}
-		else {
-			cout << "NO SHELF CAN FIT, TERMINATING ITEM ADDITION" << endl;
-		}
+		
 	}
+	system("CLS");
+	cout << "NO SHELF CAN FIT OR NO SHELF OF SAME TYPE, TERMINATING ITEM ADDITION" << endl << endl;;
 }
 void remove_item(vector<Item> &ItemList, vector<Shelf> &ShelfList) {
 	string name;
@@ -341,6 +356,40 @@ void shutdown(bool *loggedIn, bool *running) {
 	*running = false;
 }
 
+void print_menu(int *auth) {
+	if (*auth == 1) {
+		cout << "Available functions: " << endl;
+		cout << "\t" << "addItem - Add an item to the database and find a shelf" << endl;
+		cout << "\t" << "removeItem - Remove an item from the database and from all shelves" << endl;
+		cout << "\t" << "logout - Log out of the system" << endl;
+		cout << "\t" << "shutdown - Shutdown the system" << endl;
+	}
+	else if (*auth == 2) {
+
+	}
+	else if (*auth == 3) {
+
+	}
+	else if (*auth == 4) {
+
+	}
+	else if (*auth == 5) {
+		cout << "Available functions: " << endl;
+		cout << "\t" << "addItem - Add an item to the database and find a shelf" << endl;
+		cout << "\t" << "removeItem - Remove an item from the database and from all shelves" << endl;
+		cout << "\t" << "createAccount - Create an account for a new user" << endl;
+		cout << "\t" << "deleteAccount - Delete the account of a user" << endl;
+		cout << "\t" << "logout - Log out of the system" << endl;
+		cout << "\t" << "shutdown - Shutdown the system" << endl;
+	}
+	else {
+		cout << "No access to any functions, auth level was not given correctly when account was created." << endl;
+		cout << "Contact administrator to correct the issue." << endl;
+		cout << "\t" << "logout - Log out of the system" << endl;
+		cout << "\t" << "shutdown - Shutdown the system" << endl;
+	}
+}
+
 
 int main() {
 	vector<Item> ItemList;
@@ -355,29 +404,51 @@ int main() {
 	int auth = 0;
 
 	AccountList.push_back(Account("Admin", "password", 5));
+	ShelfList.push_back(Shelf("A", "test2", 0, 5));
+
 	ShelfList.push_back(Shelf("A1", "test", 0, 5));
 	ShelfList.push_back(Shelf("A2", "test", 0, 5));
+
+	//TODO: Clear Screen after every cout to make it look nice, example in end of additem where no shelf was found
 
 	while (running) {
 		login(&loggedIn, AccountList, &auth);
 		while (loggedIn) {
 			//shutdown(&loggedIn, &running);
-			/*
-			add_account(AccountList);
-			cout << "Account added" << endl;
-			remove_account(AccountList);
-			cout << "Account removed" << endl;
-			logout(&loggedIn, &auth);*/
+			print_menu(&auth);
 			cin >> command;
-			if (command == "add") {
+			if (command == "addItem" && (auth == 1 || auth == 5)) {
 				add_item(ItemList, ShelfList);
 			}
-			else if (command == "remove") {
+			else if (command == "addItem") {
+				cout << "You do not have access to that function." << endl;
+			}
+			if (command == "removeItem" && (auth == 1 || auth == 5)) {
 				remove_item(ItemList, ShelfList);
 			}
-			else if (command == "logout") {
+			else if (command == "removeItem"){
+				cout << "You do not have access to that function." << endl;
+			}
+			if (command == "createAccount" && (auth == 5)) {
+				add_account(AccountList);
+			}
+			else if (command == "createAccount"){
+				cout << "You do not have access to that function." << endl;
+			}
+			if (command == "deleteAccount" && (auth == 5)) {
+				remove_account(AccountList);
+			}
+			else if (command == "deleteAccount"){
+				cout << "You do not have access to that function." << endl;
+			}
+			if (command == "logout") {
 				logout(&loggedIn, &auth);
 			}
+			if (command == "shutdown") {
+				shutdown(&loggedIn, &running);
+			}
+			/*
+			//This is was used for testing add_item, it outputs all items and the count then all shelves, their count, and each item on the specific shelf and its count
 			cout << endl << endl;
 			for (int i = 0; i < ItemList.size(); i++) {
 				cout << ItemList[i].get_name() << "\t" << ItemList[i].get_count() << endl;
@@ -391,6 +462,7 @@ int main() {
 					cout << names[k] << "\t" << counts[k] << endl;
 				}
 			}
+			*/
 		}
 	}
 
