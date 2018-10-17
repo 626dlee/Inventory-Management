@@ -199,6 +199,7 @@ void add_item(vector<Item> &ItemList, vector<Shelf> &ShelfList) {
 
 								ItemList[i].change_count(count);
 								remain = ShelfList[j].get_remaining();
+								ItemList[i].new_shelf(ShelfList[l].get_shelfloc());
 								ShelfList[j].change_store(name, remain);
 								ShelfList[l].change_store(name, count - remain);
 								cout << "Place " << remain << " items in shelf " << ShelfList[j].get_shelfloc()
@@ -447,7 +448,7 @@ int main() {
 			if (command == "shutdown") {
 				shutdown(&loggedIn, &running);
 			}
-			/*
+			
 			//This is was used for testing add_item, it outputs all items and the count then all shelves, their count, and each item on the specific shelf and its count
 			cout << endl << endl;
 			for (int i = 0; i < ItemList.size(); i++) {
@@ -459,10 +460,10 @@ int main() {
 				names = ShelfList[i].get_storedNames();
 				counts = ShelfList[i].get_storedCount();
 				for (int k = 0; k < names.size(); k++) {
-					cout << names[k] << "\t" << counts[k] << endl;
+					cout << "\t" << names[k] << "\t" << counts[k] << endl;
 				}
 			}
-			*/
+			
 		}
 	}
 
