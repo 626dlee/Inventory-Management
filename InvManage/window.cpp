@@ -1921,6 +1921,7 @@ void Window::load_acc(){
     else{
         //Admin Account
         AccountList.push_back(Account("Admin","password",3));
+        store_acc();
     }
 }
 void Window::store_acc(){
